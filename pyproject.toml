@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "logging-decorator"
+version = "0.1.0"
+description = ""
+authors = ["Vitaliy.Mikhalchenko <vitalik.arshavin@yandex.ru>"]
+readme = "README.md"
+packages = [{include = "logging_decorator"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+pytest-asyncio = "^0.21.1"
+ruff = "^0.0.287"
+mypy = "^1.5.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

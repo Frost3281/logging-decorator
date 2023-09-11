@@ -1,5 +1,6 @@
 from string import Template
 
+
 DEBUG_START_FUNCTION_WORK_MSG = Template(
     "function '$func_name' called with args $signature",
 )

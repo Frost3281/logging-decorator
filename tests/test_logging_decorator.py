@@ -29,7 +29,9 @@ SYNC_FUNC_NAME = sync_func_logging_testing.__name__
 ASYNC_FUNC_NAME = async_func_logging_testing.__name__
 
 
-@pytest.mark.parametrize('function', [sync_func_logging_testing, async_func_logging_testing])
+@pytest.mark.parametrize(
+    'function', [sync_func_logging_testing, async_func_logging_testing],
+)
 def test_sync_func_decorator_type_hinting(function: T_AsyncOrSyncFunction):
     func_annotations = get_type_hints(function)
     deco_annotations = get_type_hints(log()(function))
@@ -50,7 +52,7 @@ def test_sync_function_logs_start_and_end(
     wrapper: Callable[[T_AsyncOrSyncFunction], T_SyncFunction],
 ):
     decorated = log(mock_logger)(function)
-    result = wrapper(decorated(10, "abc"))
+    result = wrapper(decorated(10, "abc"))  # type: ignore
     assert result == "10 abc"
     assert check_msg_from_list_contains_text(
         DEBUG_START_FUNCTION_WORK_MSG.substitute(

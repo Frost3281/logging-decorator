@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "logging-decorator"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["Vitaliy.Mikhalchenko <vitalik.arshavin@yandex.ru>"]
 readme = "README.md"
@@ -15,6 +15,40 @@ pytest = "^7.4.2"
 pytest-asyncio = "^0.21.1"
 ruff = "^0.0.287"
 mypy = "^1.5.1"
+
+[tool.ruff]
+select = [
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "UP",  # pyupgrade
+  "C",  # mccabe
+  "N",  # pep8-naming
+  "PL",  # pylint
+  "FBT",  # flake8-boolean-traps
+  "B",  # flake8-bugbear
+  "COM",  # flake8-commas
+  "C4",  # flake8-comprehensions
+  "PERF",  # perflint
+  "FURB",  # refurb
+  "ARG",  # flake8-unused-arguments
+  "EM",  # flake8-errmsg
+  "ICN",  # flake8-import-conventions
+  "G",  # flake8-logging-format
+  "PIE",  # flake8-pie
+  "T20",  # flake8-print
+  "PYI",  # flake8-pyi
+  "PT",  # flake8-pytest-style
+  "RSE",  # flake8-raise
+  "RET",  # flake8-return
+  "SLF",  # flake8-self
+  "SIM",  # flake8-simplify
+  "TID",  # flake8-tidy-imports
+  "INT",  # flake8-gettext
+  "ERA",  # eradicate
+  "PD",  # pandas-vet
+  "TRY",  # tryceratops
+  "FLY",  # flynt
+]
 
 [build-system]
 requires = ["poetry-core"]

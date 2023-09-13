@@ -5,10 +5,8 @@ from typing import Any
 
 def get_default_logger() -> Logger:
     """Получаем дефолтный логгер."""
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(logging.StreamHandler())
-    return logger
+    logging.basicConfig(level=logging.DEBUG)
+    return logging.getLogger()
 
 
 def get_signature_repr(*args: Any, **kwargs: Any) -> str:

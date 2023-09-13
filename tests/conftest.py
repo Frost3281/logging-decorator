@@ -10,11 +10,11 @@ class MockLogger:
     def __init__(self) -> None:
         self.logged_messages: list[str] = []
 
-    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         self.logged_messages.append(msg)
 
-    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
-        self.logged_messages.append(msg)
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
+        self.logged_messages.append(msg)  # noqa: ARG002
 
 
 @pytest.fixture()
@@ -23,6 +23,6 @@ def mock_logger() -> MockLogger:
 
 
 @pytest.fixture(autouse=True)
-def patch_sleep() -> Iterator[None]:
+def _patch_sleep() -> Iterator[None]:
     with patch("time.sleep", return_value=None):
         yield

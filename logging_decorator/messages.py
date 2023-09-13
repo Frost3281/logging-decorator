@@ -2,12 +2,13 @@ from string import Template
 
 
 DEBUG_START_FUNCTION_WORK_MSG = Template(
-    "function '$func_name' called with args $signature",
+    "Функция '$func_name' начала работу с аргументами $signature",
 )
 DEBUG_END_FUNCTION_WORK_MSG = Template(
-    "function '$func_name' ended job with args $signature, work_time = $work_time",
+    "Функция '$func_name' завершила работу за $work_time сек. "
+    + "В неё были переданы следующие аргументы: $signature",
 )
 EXCEPTION_MSG = Template(
-    "Exception raised in '$func_name'. Description: $exc_repr. "
-    + "Function args: $signature",
+    "Возникла ошибка при работе функции '$func_name'. Описание: $exc_repr. "
+    + "Аргументы, передаваемые в функцию: $signature",
 )

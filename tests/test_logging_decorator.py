@@ -30,7 +30,8 @@ ASYNC_FUNC_NAME = async_func_logging_testing.__name__
 
 
 @pytest.mark.parametrize(
-    'function', [sync_func_logging_testing, async_func_logging_testing],
+    "function",
+    [sync_func_logging_testing, async_func_logging_testing],
 )
 def test_sync_func_decorator_type_hinting(function: T_AsyncOrSyncFunction):
     func_annotations = get_type_hints(function)
@@ -39,13 +40,13 @@ def test_sync_func_decorator_type_hinting(function: T_AsyncOrSyncFunction):
 
 
 @pytest.mark.parametrize(
-    'function,func_name,wrapper',
+    ("function", "func_name", "wrapper"),
     [
-        [sync_func_logging_testing, SYNC_FUNC_NAME, lambda func: func],
-        [async_func_logging_testing, ASYNC_FUNC_NAME, asyncio.run],
-    ]
+        (sync_func_logging_testing, SYNC_FUNC_NAME, lambda func: func),
+        (async_func_logging_testing, ASYNC_FUNC_NAME, asyncio.run),
+    ],
 )
-def test_sync_function_logs_start_and_end(
+def test_function_job_log(
     function: T_AsyncOrSyncFunction,
     func_name: str,
     mock_logger: MockLogger,
@@ -56,30 +57,30 @@ def test_sync_function_logs_start_and_end(
     assert result == "10 abc"
     assert check_msg_from_list_contains_text(
         DEBUG_START_FUNCTION_WORK_MSG.substitute(
-            func_name=func_name, signature="10, 'abc'"
+            func_name=func_name, signature="10, 'abc'",
         ),
         mock_logger.logged_messages,
     )
     with pytest.raises(KeyError):
         DEBUG_END_FUNCTION_WORK_MSG.substitute(
-            func_name=func_name, signature="10, 'abc'"
+            func_name=func_name, signature="10, 'abc'",
         )
     assert check_msg_from_list_contains_text(
         DEBUG_END_FUNCTION_WORK_MSG.safe_substitute(
-            func_name=func_name, signature="10, 'abc'"
+            func_name=func_name, signature="10, 'abc'",
         ).split("$")[0],
         mock_logger.logged_messages,
     )
 
 
 @pytest.mark.parametrize(
-    'function,func_name,wrapper',
+    ("function", "func_name", "wrapper"),
     [
-        [sync_func_logging_testing, SYNC_FUNC_NAME, lambda func: func],
-        [async_func_logging_testing, ASYNC_FUNC_NAME, asyncio.run],
-    ]
+        (sync_func_logging_testing, SYNC_FUNC_NAME, lambda func: func),
+        (async_func_logging_testing, ASYNC_FUNC_NAME, asyncio.run),
+    ],
 )
-def test_sync_function_logs_exception(
+def test_exception_logging(
     function: T_AsyncOrSyncFunction,
     func_name: str,
     wrapper: Callable[[T_AsyncOrSyncFunction], T_SyncFunction],

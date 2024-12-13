@@ -137,5 +137,6 @@ def _log_finish_function_work(
         extra={
             'func_name': func_name,
             'signature': signature,
+            'work_time': work_time,
         },
     )

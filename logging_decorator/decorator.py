@@ -54,7 +54,7 @@ def log(
             signature = get_signature_repr(*args, **kwargs)
             _log_start_function_work(_logger, func.__name__, signature)
             try:
-                result = await cast('Awaitable[T_Ret]', func(*args, **kwargs))
+                result = await cast(Awaitable[T_Ret], func(*args, **kwargs))
             except Exception as exc:
                 _log_exception(
                     _logger,
@@ -76,7 +76,7 @@ def log(
             signature = get_signature_repr(*args, **kwargs)
             _log_start_function_work(_logger, func.__name__, signature)
             try:
-                result = cast('T_Ret', func(*args, **kwargs))
+                result = cast(T_Ret, func(*args, **kwargs))
             except Exception as exc:
                 _log_exception(
                     _logger,
@@ -90,7 +90,7 @@ def log(
                 return result
 
         return (
-            cast('Callable[P_Spec, T_Ret]', async_wrapper)
+            cast(Callable[P_Spec, T_Ret], async_wrapper)
             if is_async_function
             else wrapper
         )

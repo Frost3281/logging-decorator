@@ -9,6 +9,7 @@ from typing import (
     cast,
     overload,
 )
+
 from typing_extensions import ParamSpec
 
 from .messages import (
@@ -19,27 +20,25 @@ from .messages import (
 from .protocols import Logger
 from .services import get_default_logger, get_signature_repr
 
-P_Spec = ParamSpec("P_Spec")
-T_Ret = TypeVar("T_Ret")
+P_Spec = ParamSpec('P_Spec')
+T_Ret = TypeVar('T_Ret')
 
 
 def log(
     logger: Union[Logger, None] = None,
 ) -> Callable[[Callable[P_Spec, T_Ret]], Callable[P_Spec, T_Ret]]:
     """Декоратор для автоматического логирования данных о работе функции."""
-    _logger = logger or cast(Logger, get_default_logger())
+    _logger = logger or cast('Logger', get_default_logger())
 
     @overload
     def decorator(
         func: Callable[P_Spec, T_Ret],
-    ) -> Callable[P_Spec, T_Ret]:
-        ...
+    ) -> Callable[P_Spec, T_Ret]: ...
 
     @overload
     def decorator(  # type: ignore
         func: Callable[P_Spec, Awaitable[T_Ret]],
-    ) -> Callable[P_Spec, Awaitable[T_Ret]]:
-        ...
+    ) -> Callable[P_Spec, Awaitable[T_Ret]]: ...
 
     def decorator(
         func: Union[Callable[P_Spec, T_Ret], Callable[P_Spec, Awaitable[T_Ret]]],
@@ -55,14 +54,15 @@ def log(
             signature = get_signature_repr(*args, **kwargs)
             _log_start_function_work(_logger, func.__name__, signature)
             try:
-                result = await cast(Awaitable[T_Ret], func(*args, **kwargs))
+                result = await cast('Awaitable[T_Ret]', func(*args, **kwargs))
             except Exception as exc:
-                _log_exception_with_raise(
+                _log_exception(
                     _logger,
                     func.__name__,
                     exc,
                     signature,
                 )
+                raise
             else:
                 _log_finish_function_work(_logger, func.__name__, signature, time_start)
                 return result
@@ -76,20 +76,21 @@ def log(
             signature = get_signature_repr(*args, **kwargs)
             _log_start_function_work(_logger, func.__name__, signature)
             try:
-                result = cast(T_Ret, func(*args, **kwargs))
+                result = cast('T_Ret', func(*args, **kwargs))
             except Exception as exc:
-                _log_exception_with_raise(
+                _log_exception(
                     _logger,
                     func.__name__,
                     exc,
                     signature,
                 )
+                raise
             else:
                 _log_finish_function_work(_logger, func.__name__, signature, time_start)
                 return result
 
         return (
-            cast(Callable[P_Spec, T_Ret], async_wrapper)
+            cast('Callable[P_Spec, T_Ret]', async_wrapper)
             if is_async_function
             else wrapper
         )
@@ -97,19 +98,31 @@ def log(
     return decorator
 
 
-def _log_exception_with_raise(
+def _log_exception(
     logger: Logger,
     func_name: str,
     exc: Exception,
     signature: str,
-):
+) -> None:
     exc_repr = repr(exc)
-    logger.exception(EXCEPTION_MSG.substitute(**locals()))
-    raise exc
+    logger.exception(
+        EXCEPTION_MSG.safe_substitute(func_name=func_name),
+        extra={
+            'func_name': func_name,
+            'exc_repr': exc_repr,
+            'signature': signature,
+        },
+    )
 
 
 def _log_start_function_work(logger: Logger, func_name: str, signature: str) -> None:
-    logger.info(DEBUG_START_FUNCTION_WORK_MSG.safe_substitute(**locals()))
+    logger.info(
+        DEBUG_START_FUNCTION_WORK_MSG.safe_substitute(**locals()),
+        extra={
+            'func_name': func_name,
+            'signature': signature,
+        },
+    )
 
 
 def _log_finish_function_work(
@@ -119,4 +132,10 @@ def _log_finish_function_work(
     time_start: float,
 ) -> None:
     work_time = time.perf_counter() - time_start
-    logger.info(DEBUG_END_FUNCTION_WORK_MSG.substitute(**locals()))
+    logger.info(
+        DEBUG_END_FUNCTION_WORK_MSG.safe_substitute(**locals()),
+        extra={
+            'func_name': func_name,
+            'signature': signature,
+        },
+    )

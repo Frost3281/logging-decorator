@@ -4,8 +4,8 @@ from typing import Any, Protocol
 class Logger(Protocol):
     """Протокол логгера."""
 
-    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         """Сообщение в уровне инфо."""
 
-    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         """Сообщение в уровне исключения."""

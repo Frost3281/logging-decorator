@@ -14,7 +14,23 @@ T = TypeVar('T')
 LoggerType = TypeVar('LoggerType', bound='Logger')
 
 
-def log(  # noqa: C901
+@overload
+def log(
+    logger: Logger,
+    config: Union[LogConfig, None] = None,
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    ...
+
+
+@overload
+def log(  # type: ignore
+    logger: Logger,
+    config: Union[LogConfig, None] = None,
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
+    ...
+
+
+def log(  # type: ignore # noqa: C901
     logger: Logger,
     config: Union[LogConfig, None] = None,
 ) -> Callable[

@@ -7,19 +7,29 @@ from logging_decorator.config import LogConfig
 
 @singledispatch
 def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: ANN401
-    """Рекурсивное форматирование объектов с ограничением глубины."""
-    if depth > 1:
-        return '...'
-    try:
+    """Рекурсивное форматирование объектов."""
+    def _get_repr_with_getmembers() -> str:
         attrs = {
             k: pretty_repr(v, config, depth + 1)
             for k, v in inspect.getmembers(obj)
             if not k.startswith('_') and not inspect.ismethod(v)
         }
-    except Exception:  # noqa: BLE001
-        return f'{obj.__class__.__name__} instance'
-    else:
         return f'{obj.__class__.__name__}({attrs})'
+
+    def _get_repr_with_dict() -> str:
+        try:
+            attrs = {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
+        except Exception:  # noqa: BLE001
+            return f'{obj.__class__.__name__} instance'
+        else:
+            return f'{obj.__class__.__name__}({attrs})'
+
+    if depth > 1:
+        return '...'
+    try:
+        return _get_repr_with_getmembers()
+    except Exception:  # noqa: BLE001
+        return _get_repr_with_dict()
 
 
 @pretty_repr.register(int)

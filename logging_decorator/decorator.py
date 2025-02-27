@@ -132,10 +132,3 @@ def is_async(
 ) -> TypeGuard[Callable[P, Awaitable[T]]]:
     """Проверяет, является ли функция асинхронной."""
     return inspect.iscoroutinefunction(func)
-
-
-def is_sync(
-    func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
-) -> TypeGuard[Callable[P, T]]:
-    """Проверяет, является ли функция синхронной."""
-    return not is_async(func)

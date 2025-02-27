@@ -4,7 +4,10 @@ version = "1.0.0"
 description = ""
 authors = ["Vitaliy.Mikhalchenko <vitalik.arshavin@yandex.ru>"]
 readme = "README.md"
-packages = [{include = "logging_decorator"}]
+packages = [
+    {include = "logging_decorator"},
+    {include = "logging_decorator/py.typed"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"

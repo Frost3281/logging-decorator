@@ -7,5 +7,5 @@ class Logger(Protocol):
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         """Сообщение в уровне инфо."""
 
-    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ANN401
         """Сообщение в уровне исключения."""

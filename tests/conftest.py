@@ -5,23 +5,21 @@ import pytest
 
 
 class MockLogger:
-    """Заглушка для логгера."""
+    """Заглушка логгера для тестирования."""
 
     def __init__(self) -> None:
-        self.logged_messages: list[str] = []
+        self.messages: list[dict[str, Any]] = []
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
-        self.logged_messages.append(msg)
-        for extra_value in kwargs.get('extra', {}).values():
-            self.logged_messages.append(extra_value)
+        """Логирование информационного сообщения."""
+        self.messages.append({"level": "INFO", "msg": msg, **kwargs})
 
-    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
-        self.logged_messages.append(msg)  # noqa: ARG002
-        for extra_value in kwargs.get('extra', {}).values():
-            self.logged_messages.append(extra_value)
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
+        """Логирование сообщения об ошибке."""
+        self.messages.append({"level": "ERROR", "msg": msg, **kwargs})
 
 
-@pytest.fixture
+@pytest.fixture(name='logger')
 def mock_logger() -> MockLogger:
     return MockLogger()
 

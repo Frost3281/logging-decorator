@@ -1,166 +1,117 @@
 import inspect
 import time
 from functools import wraps
-from typing import (
-    Awaitable,
-    Callable,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Awaitable, Callable, TypeVar, cast
 
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, Union
 
-from .messages import (
-    DEBUG_END_FUNCTION_WORK_MSG,
-    DEBUG_START_FUNCTION_WORK_MSG,
-    EXCEPTION_MSG,
-)
+from .config import LogConfig
 from .protocols import Logger
-from .services import get_default_logger, get_signature_repr
+from .services import get_signature_repr
 
-P_Spec = ParamSpec('P_Spec')
-T_Ret = TypeVar('T_Ret')
+P = ParamSpec('P')
+T = TypeVar('T')
+LoggerType = TypeVar('LoggerType', bound='Logger')
 
 
 def log(
-    logger: Union[Logger, None] = None,
-    max_arg_value_len: int = 30,
-    *,
-    include_args: bool = True,
-    pretty: bool = True,
-) -> Callable[[Callable[P_Spec, T_Ret]], Callable[P_Spec, T_Ret]]:
-    """Декоратор для автоматического логирования данных о работе функции."""
-    _logger = logger or cast('Logger', get_default_logger())
+    logger: Logger,
+    config: Union[LogConfig, None] = None,
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
+    """Декоратор для логирования работы функций."""
+    config = config or LogConfig()
 
-    def decorator(
-        func: Callable[P_Spec, T_Ret],
-    ) -> Callable[P_Spec, T_Ret]:
-        is_async_function = inspect.iscoroutinefunction(func)
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        is_async = inspect.iscoroutinefunction(func)
 
         @wraps(func)
-        async def async_wrapper(
-            *args: P_Spec.args,
-            **kwargs: P_Spec.kwargs,
-        ) -> T_Ret:
-            time_start = time.perf_counter()
-            signature = (
-                get_signature_repr(
-                    func,
-                    max_arg_value_len=max_arg_value_len,
-                    args=args,
-                    kwargs=kwargs,
-                    pretty=pretty,
-                )
-                if include_args
-                else ''
+        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            """Обертка для асинхронных функций."""
+            start_time = time.perf_counter()
+            signature_repr = get_signature_repr(func, args, kwargs, config)
+            if config.include_args and signature_repr:
+                signature = f' с аргументами:\n  {signature_repr}'
+            else:
+                signature = ''
+            msg = f'Функция "{func.__name__}" начала работу{signature}.'
+            logger.info(
+                msg,
+                extra={
+                    'func': func.__name__,
+                    'arguments': signature,
+                    'status': 'start',
+                },
             )
-            _log_start_function_work(_logger, func.__name__, signature)
             try:
-                result = await cast(Awaitable[T_Ret], func(*args, **kwargs))
+                result = await cast(Awaitable[T], func(*args, **kwargs))
             except Exception as exc:
-                _log_exception(
-                    _logger,
-                    func.__name__,
-                    exc,
-                    signature,
+                msg = f'Ошибка в функции "{func.__name__}": {repr(exc)}.'
+                logger.exception(
+                    msg,
+                    extra={
+                        'func': func.__name__,
+                        'exception': exc,
+                        'status': 'error',
+                    },
                 )
                 raise
             else:
-                _log_finish_function_work(_logger, func.__name__, signature, time_start)
+                elapsed = time.perf_counter() - start_time
+                msg = f'Функция "{func.__name__}" завершила работу за {elapsed:.4f} сек.'
+                logger.info(
+                    msg,
+                    extra={
+                        'func': func.__name__,
+                        'elapsed': elapsed,
+                        'status': 'success',
+                    },
+                )
                 return result
 
         @wraps(func)
-        def wrapper(
-            *args: P_Spec.args,
-            **kwargs: P_Spec.kwargs,
-        ) -> T_Ret:
-            time_start = time.perf_counter()
-            signature = (
-                get_signature_repr(
-                    func,
-                    max_arg_value_len=max_arg_value_len,
-                    args=args,
-                    kwargs=kwargs,
-                    pretty=pretty,
-                )
-                if include_args
-                else ''
+        def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+            """Обертка для синхронных функций."""
+            start_time = time.perf_counter()
+            signature_repr = get_signature_repr(func, args, kwargs, config)
+            if config.include_args and signature_repr:
+                signature = f' с аргументами:\n  {signature_repr}'
+            else:
+                signature = ''
+            msg = f'Функция "{func.__name__}" начала работу{signature}.'
+            logger.info(
+                msg,
+                extra={
+                    'func': func.__name__,
+                    'arguments': signature,
+                    'status': 'start',
+                },
             )
-            _log_start_function_work(_logger, func.__name__, signature)
             try:
-                result = cast(T_Ret, func(*args, **kwargs))
+                result = func(*args, **kwargs)
             except Exception as exc:
-                _log_exception(
-                    _logger,
-                    func.__name__,
-                    exc,
-                    signature,
+                msg = f'Ошибка в функции "{func.__name__}": {repr(exc)}.'
+                logger.exception(
+                    msg,
+                    extra={
+                        'func': func.__name__,
+                        'exception': exc,
+                        'status': 'error',
+                    },
                 )
                 raise
             else:
-                _log_finish_function_work(_logger, func.__name__, signature, time_start)
+                elapsed = time.perf_counter() - start_time
+                msg = f'Функция "{func.__name__}" завершила работу за {elapsed:.4f} сек.'
+                logger.info(
+                    msg,
+                    extra={
+                        'func': func.__name__,
+                        'elapsed': elapsed,
+                        'status': 'success',
+                    },
+                )
                 return result
 
-        return (
-            cast(Callable[P_Spec, T_Ret], async_wrapper) if is_async_function else wrapper
-        )
+        return cast(Callable[P, T], async_wrapper if is_async else sync_wrapper)
 
     return decorator
-
-
-def _log_exception(
-    logger: Logger,
-    func_name: str,
-    exc: Exception,
-    signature: str,
-) -> None:
-    signature_text = f' с аргументами: {signature}' if signature else ''
-    exc_repr = repr(exc)
-    logger.error(
-        EXCEPTION_MSG.safe_substitute(
-            func_name=func_name,
-            signature=signature_text,
-        ),
-        extra={
-            'func_name': func_name,
-            'exc_repr': exc_repr,
-            'signature': signature,
-        },
-    )
-
-
-def _log_start_function_work(logger: Logger, func_name: str, signature: str) -> None:
-    signature_text = f' с аргументами: {signature}' if signature else ''
-    logger.info(
-        DEBUG_START_FUNCTION_WORK_MSG.safe_substitute(
-            func_name=func_name,
-            signature=signature_text,
-        ),
-        extra={
-            'func_name': func_name,
-            'signature': signature,
-        },
-    )
-
-
-def _log_finish_function_work(
-    logger: Logger,
-    func_name: str,
-    signature: str,
-    time_start: float,
-) -> None:
-    work_time = time.perf_counter() - time_start
-    signature_text = f' с аргументами: {signature}' if signature else ''
-    logger.info(
-        DEBUG_END_FUNCTION_WORK_MSG.safe_substitute(
-            func_name=func_name,
-            work_time=f'{work_time:.4f}',
-            signature=signature_text,
-        ),
-        extra={
-            'func_name': func_name,
-            'signature': signature,
-            'work_time': work_time,
-        },
-    )

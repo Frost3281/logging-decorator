@@ -12,11 +12,11 @@ class MockLogger:
 
     def info(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         """Логирование информационного сообщения."""
-        self.messages.append({"level": "INFO", "msg": msg, **kwargs})
+        self.messages.append({'level': 'INFO', 'msg': msg, **kwargs})
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         """Логирование сообщения об ошибке."""
-        self.messages.append({"level": "ERROR", "msg": msg, **kwargs})
+        self.messages.append({'level': 'ERROR', 'msg': msg, **kwargs})
 
 
 @pytest.fixture(name='logger')

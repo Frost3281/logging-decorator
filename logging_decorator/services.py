@@ -22,7 +22,6 @@ def get_signature_repr(
     """Форматирует аргументы функции в читаемый вид с переносами строк."""
     if not config.include_args:
         return ''
-
     try:
         sig = inspect.signature(func)
         bound = sig.bind(*args, **kwargs)
@@ -30,9 +29,10 @@ def get_signature_repr(
         params = bound.arguments.items()
     except Exception:  # noqa: BLE001
         params = list(enumerate(args)) + list(kwargs.items())  # type: ignore
-
     arg_lines = []
     for name, value in params:
+        if name in config.skipped_args:
+            continue
         type_info = f': {type(value).__name__}' if config.show_types else ''
         value_repr = pretty_repr(value, config)
         arg_lines.append(f'{name}{type_info} = {value_repr}')

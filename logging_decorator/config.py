@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import Union
+from dataclasses import dataclass, field
+from typing import Iterable, Union
 
 
 @dataclass(frozen=True)
@@ -9,3 +9,4 @@ class LogConfig:
     include_args: bool = True
     max_arg_length: Union[int, None] = 100
     show_types: bool = True
+    skipped_args: Iterable[str] = field(default_factory=list)

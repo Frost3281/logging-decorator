@@ -105,13 +105,22 @@ def test_exception_logging(logger: MockLogger) -> None:
     assert 'Тестовая ошибка' in error_msg['msg'], 'Отсутствует текст ошибки'
 
 
-def test_signature_repr() -> None:
+@pytest.mark.parametrize(
+    ('skipped_args', 'expected_repr'),
+    [
+        ((), "a: int = 42\n  b: str = 'value'"),
+        (('b',), 'a: int = 42'),
+        (('a',), "b: str = 'value'"),
+    ],
+)
+def test_signature_repr(skipped_args: tuple[str, ...], expected_repr: str) -> None:
     """Тест формирования представления сигнатуры функции."""
 
     def sample_func(a: int, b: str = 'test') -> None: ...
 
     args = (42,)
     kwargs = {'b': 'value'}
-    signature = get_signature_repr(sample_func, args, kwargs, config=LogConfig())
-    expected = "a: int = 42\n  b: str = 'value'"
-    assert signature == expected, 'Некорректное представление аргументов'
+    signature = get_signature_repr(
+        sample_func, args, kwargs, config=LogConfig(skipped_args=skipped_args),
+    )
+    assert signature == expected_repr, 'Некорректное представление аргументов'

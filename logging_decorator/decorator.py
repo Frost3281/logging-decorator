@@ -1,9 +1,16 @@
 import inspect
 import time
 from functools import wraps
-from typing import Awaitable, Callable, TypeVar, overload
-
-from typing_extensions import ParamSpec, TypeGuard, Union
+from typing import (
+    Awaitable,
+    Callable,
+    ParamSpec,
+    Protocol,
+    TypeGuard,
+    TypeVar,
+    Union,
+    overload,
+)
 
 from .config import LogConfig
 from .protocols import Logger
@@ -14,39 +21,33 @@ T = TypeVar('T')
 LoggerType = TypeVar('LoggerType', bound='Logger')
 
 
-@overload
-def log(
-    logger: Logger,
-    config: Union[LogConfig, None] = None,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
-    ...
+class SyncOrAsyncFunc(Protocol):
+    """Типизированный протокол для декорирования функций."""
 
+    @overload
+    def __call__(self, func: Callable[P, T]) -> Callable[P, T]: ...
 
-@overload
-def log(  # type: ignore
-    logger: Logger,
-    config: Union[LogConfig, None] = None,
-) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
-    ...
+    @overload
+    def __call__(self, func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
+
+    def __call__(  # type: ignore
+        self, func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
+    ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
+        """Синхронная или асинхронная функция."""
 
 
 def log(  # type: ignore # noqa: C901
     logger: Logger,
     config: Union[LogConfig, None] = None,
-) -> Callable[
-    [Union[Callable[P, T], Callable[P, Awaitable[T]]]],
-    Union[Callable[P, T], Callable[P, Awaitable[T]]],
-]:
+) -> SyncOrAsyncFunc:
     """Декоратор для логирования работы функций."""
     config = config or LogConfig()
 
     @overload
-    def decorator(func: Callable[P, T]) -> Callable[P, T]:
-        ...
+    def decorator(func: Callable[P, T]) -> Callable[P, T]: ...
 
     @overload
-    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
-        ...
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
 
     def decorator(  # type: ignore # noqa: C901
         func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
@@ -90,6 +91,7 @@ def log(  # type: ignore # noqa: C901
             )
 
         if is_async(func):
+
             @wraps(func)
             async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 """Обертка для асинхронных функций."""
@@ -123,6 +125,7 @@ def log(  # type: ignore # noqa: C901
                 return result  # type: ignore
 
         return sync_wrapper
+
     return decorator  # type: ignore
 
 

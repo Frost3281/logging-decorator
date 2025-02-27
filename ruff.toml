@@ -24,6 +24,7 @@ ignore = [
     "DOC402",
     "TC006",
 ]
+preview = true
 
 
 [lint.per-file-ignores]

@@ -15,7 +15,7 @@ class MockLogger:
         for extra_value in kwargs.get('extra', {}).values():
             self.logged_messages.append(extra_value)
 
-    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:  # noqa: ARG002
         self.logged_messages.append(msg)  # noqa: ARG002
         for extra_value in kwargs.get('extra', {}).values():
             self.logged_messages.append(extra_value)

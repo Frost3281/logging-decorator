@@ -9,6 +9,7 @@ from logging_decorator.messages import (
     DEBUG_START_FUNCTION_WORK_MSG,
     EXCEPTION_MSG,
 )
+from logging_decorator.services import get_signature_repr
 from tests.conftest import MockLogger
 from tests.services import check_msg_from_list_contains_text
 
@@ -40,25 +41,29 @@ def test_sync_func_decorator_type_hinting(function: T_AsyncOrSyncFunction):
 
 
 @pytest.mark.parametrize(
-    ('function', 'func_name', 'wrapper'),
+    ('function', 'func_name', 'wrapper', 'include_args'),
     [
-        (sync_func_logging_testing, SYNC_FUNC_NAME, lambda func: func),
-        (async_func_logging_testing, ASYNC_FUNC_NAME, asyncio.run),
+        (sync_func_logging_testing, SYNC_FUNC_NAME, lambda func: func, True),
+        (async_func_logging_testing, ASYNC_FUNC_NAME, asyncio.run, False),
     ],
 )
 def test_function_job_log(
     function: T_AsyncOrSyncFunction,
     func_name: str,
     mock_logger: MockLogger,
+    include_args: bool,  # noqa: FBT001
     wrapper: Callable[[T_AsyncOrSyncFunction], T_SyncFunction],
 ):
-    decorated = log(mock_logger)(function)
+    decorated = log(mock_logger, include_args=include_args)(function)
     result = wrapper(decorated(10, 'abc'))  # type: ignore
     assert result == '10 abc'
+    signature = (
+        get_signature_repr(function, args=(10, 'abc'), kwargs={}) if include_args else ''
+    )
     assert check_msg_from_list_contains_text(
         DEBUG_START_FUNCTION_WORK_MSG.substitute(
             func_name=func_name,
-            signature="10, 'abc'",
+            signature=f' с аргументами: {signature}' if include_args else '',
         ),
         mock_logger.logged_messages,
     )
@@ -88,8 +93,11 @@ def test_exception_logging(
     decorated = log(mock_logger)(function)
     with pytest.raises(TypeError):
         wrapper(decorated(10, '', None))  # type: ignore
+    signature = get_signature_repr(function, args=(10, '', None), kwargs={})
     assert check_msg_from_list_contains_text(
-        EXCEPTION_MSG.safe_substitute(func_name=func_name).split('$')[0],
+        EXCEPTION_MSG.safe_substitute(func_name=func_name, signature=signature).split(
+            '$',
+        )[0],
         mock_logger.logged_messages,
     )
     assert check_msg_from_list_contains_text('TypeError', mock_logger.logged_messages)

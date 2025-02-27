@@ -1,12 +1,11 @@
 import inspect
 import time
 from functools import wraps
-from typing import Awaitable, Callable, TypeVar
+from typing import Awaitable, Callable, TypeVar, overload
 
 from typing_extensions import ParamSpec, TypeGuard, Union
 
 from .config import LogConfig
-from .exceptions import WrongFunctionTypeError
 from .protocols import Logger
 from .services import get_signature_repr
 
@@ -25,7 +24,15 @@ def log(  # noqa: C901
     """Декоратор для логирования работы функций."""
     config = config or LogConfig()
 
-    def decorator(  # noqa: C901
+    @overload
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
+        ...
+
+    @overload
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
+        ...
+
+    def decorator(  # type: ignore # noqa: C901
         func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
     ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
         def _log_start_work(*args: P.args, **kwargs: P.kwargs) -> None:
@@ -66,28 +73,27 @@ def log(  # noqa: C901
                 },
             )
 
-        @wraps(func)
-        async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            """Обертка для асинхронных функций."""
-            if not is_async(func):  # для mypy
-                raise WrongFunctionTypeError(should_be_async=True)
-            start_time = time.perf_counter()
-            _log_start_work(*args, **kwargs)
-            try:
-                result = await func(*args, **kwargs)
-            except Exception as exc:
-                _log_exception(exc)
-                raise
-            else:
-                elapsed = time.perf_counter() - start_time
-                _log_finish_work(elapsed)
-                return result
+        if is_async(func):
+            @wraps(func)
+            async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+                """Обертка для асинхронных функций."""
+                start_time = time.perf_counter()
+                _log_start_work(*args, **kwargs)
+                try:
+                    result = await func(*args, **kwargs)
+                except Exception as exc:
+                    _log_exception(exc)
+                    raise
+                else:
+                    elapsed = time.perf_counter() - start_time
+                    _log_finish_work(elapsed)
+                    return result
+
+            return async_wrapper
 
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Обертка для синхронных функций."""
-            if not is_sync(func):  # для mypy
-                raise WrongFunctionTypeError(should_be_async=False)
             start_time = time.perf_counter()
             _log_start_work(*args, **kwargs)
             try:
@@ -98,11 +104,10 @@ def log(  # noqa: C901
             else:
                 elapsed = time.perf_counter() - start_time
                 _log_finish_work(elapsed)
-                return result
+                return result  # type: ignore
 
-        return async_wrapper if is_async(func) else sync_wrapper
-
-    return decorator
+        return sync_wrapper
+    return decorator  # type: ignore
 
 
 def is_async(

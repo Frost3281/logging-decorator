@@ -4,6 +4,7 @@ from logging import Logger
 from typing import Any, Callable
 
 from logging_decorator.config import LogConfig
+from logging_decorator.pretty_repr import pretty_repr
 
 
 def get_default_logger() -> Logger:
@@ -33,11 +34,6 @@ def get_signature_repr(
     arg_lines = []
     for name, value in params:
         type_info = f': {type(value).__name__}' if config.show_types else ''
-        value_repr = repr(value)
-
-        if config.max_arg_length and len(value_repr) > config.max_arg_length:
-            value_repr = f'{value_repr[: config.max_arg_length - 3]}...'
-
-        arg_lines.append(f'{name}{type_info}={value_repr}')
-
+        value_repr = pretty_repr(value, config)
+        arg_lines.append(f'{name}{type_info} = {value_repr}')
     return '\n  '.join(arg_lines) if arg_lines else ''

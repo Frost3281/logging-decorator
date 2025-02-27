@@ -113,5 +113,5 @@ def test_signature_repr() -> None:
     args = (42,)
     kwargs = {'b': 'value'}
     signature = get_signature_repr(sample_func, args, kwargs, config=LogConfig())
-    expected = "a: int=42\n  b: str='value'"
+    expected = "a: int = 42\n  b: str = 'value'"
     assert signature == expected, 'Некорректное представление аргументов'

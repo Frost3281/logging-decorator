@@ -52,12 +52,12 @@ def log(  # type: ignore # noqa: C901
     def decorator(  # type: ignore # noqa: C901
         func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
     ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
-        def _log_start_work(*args: P.args, **kwargs: P.kwargs) -> None:
+        def _log_start_work(*args: P.args, **kwargs: P.kwargs) -> float:
+            start = time.perf_counter()
             signature_repr = get_signature_repr(func, args, kwargs, config)
+            signature = ''
             if config.include_args and signature_repr:
                 signature = f' с аргументами:\n  {signature_repr}'
-            else:
-                signature = ''
             msg = f'Функция "{func.__name__}" начала работу{signature}.'
             logger.info(
                 msg,
@@ -67,6 +67,7 @@ def log(  # type: ignore # noqa: C901
                     'status': 'start',
                 },
             )
+            return start
 
         def _log_exception(exc: Exception) -> None:
             msg = f'Ошибка в функции "{func.__name__}": {repr(exc)}.'
@@ -79,7 +80,8 @@ def log(  # type: ignore # noqa: C901
                 },
             )
 
-        def _log_finish_work(elapsed: float) -> None:
+        def _log_finish_work(start_time: float) -> None:
+            elapsed = time.perf_counter() - start_time
             msg = f'Функция "{func.__name__}" завершила работу за {elapsed:.4f} сек.'
             logger.info(
                 msg,
@@ -95,16 +97,14 @@ def log(  # type: ignore # noqa: C901
             @wraps(func)
             async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 """Обертка для асинхронных функций."""
-                start_time = time.perf_counter()
-                _log_start_work(*args, **kwargs)
+                start_time = _log_start_work(*args, **kwargs)
                 try:
                     result = await func(*args, **kwargs)
                 except Exception as exc:
                     _log_exception(exc)
                     raise
                 else:
-                    elapsed = time.perf_counter() - start_time
-                    _log_finish_work(elapsed)
+                    _log_finish_work(start_time)
                     return result
 
             return async_wrapper
@@ -112,16 +112,14 @@ def log(  # type: ignore # noqa: C901
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Обертка для синхронных функций."""
-            start_time = time.perf_counter()
-            _log_start_work(*args, **kwargs)
+            start_time = _log_start_work(*args, **kwargs)
             try:
                 result = func(*args, **kwargs)
             except Exception as exc:
                 _log_exception(exc)
                 raise
             else:
-                elapsed = time.perf_counter() - start_time
-                _log_finish_work(elapsed)
+                _log_finish_work(start_time)
                 return result  # type: ignore
 
         return sync_wrapper

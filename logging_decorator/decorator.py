@@ -1,11 +1,12 @@
 import inspect
 import time
 from functools import wraps
-from typing import Awaitable, Callable, TypeVar, cast
+from typing import Awaitable, Callable, TypeVar
 
-from typing_extensions import ParamSpec, Union
+from typing_extensions import ParamSpec, TypeGuard, Union
 
 from .config import LogConfig
+from .exceptions import WrongFunctionTypeError
 from .protocols import Logger
 from .services import get_signature_repr
 
@@ -17,13 +18,16 @@ LoggerType = TypeVar('LoggerType', bound='Logger')
 def log(  # noqa: C901
     logger: Logger,
     config: Union[LogConfig, None] = None,
-) -> Callable[[Callable[P, T]], Callable[P, T]]:
+) -> Callable[
+    [Union[Callable[P, T], Callable[P, Awaitable[T]]]],
+    Union[Callable[P, T], Callable[P, Awaitable[T]]],
+]:
     """Декоратор для логирования работы функций."""
     config = config or LogConfig()
 
-    def decorator(func: Callable[P, T]) -> Callable[P, T]:  # noqa: C901
-        is_async = inspect.iscoroutinefunction(func)
-
+    def decorator(  # noqa: C901
+        func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
+    ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
         def _log_start_work(*args: P.args, **kwargs: P.kwargs) -> None:
             signature_repr = get_signature_repr(func, args, kwargs, config)
             if config.include_args and signature_repr:
@@ -65,10 +69,12 @@ def log(  # noqa: C901
         @wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Обертка для асинхронных функций."""
+            if not is_async(func):  # для mypy
+                raise WrongFunctionTypeError(should_be_async=True)
             start_time = time.perf_counter()
             _log_start_work(*args, **kwargs)
             try:
-                result = await cast(Awaitable[T], func(*args, **kwargs))
+                result = await func(*args, **kwargs)
             except Exception as exc:
                 _log_exception(exc)
                 raise
@@ -80,6 +86,8 @@ def log(  # noqa: C901
         @wraps(func)
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Обертка для синхронных функций."""
+            if not is_sync(func):  # для mypy
+                raise WrongFunctionTypeError(should_be_async=False)
             start_time = time.perf_counter()
             _log_start_work(*args, **kwargs)
             try:
@@ -92,6 +100,20 @@ def log(  # noqa: C901
                 _log_finish_work(elapsed)
                 return result
 
-        return cast(Callable[P, T], async_wrapper if is_async else sync_wrapper)
+        return async_wrapper if is_async(func) else sync_wrapper
 
     return decorator
+
+
+def is_async(
+    func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
+) -> TypeGuard[Callable[P, Awaitable[T]]]:
+    """Проверяет, является ли функция асинхронной."""
+    return inspect.iscoroutinefunction(func)
+
+
+def is_sync(
+    func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
+) -> TypeGuard[Callable[P, T]]:
+    """Проверяет, является ли функция синхронной."""
+    return not is_async(func)

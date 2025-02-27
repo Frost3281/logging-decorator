@@ -8,6 +8,7 @@ from logging_decorator.config import LogConfig
 @singledispatch
 def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: ANN401
     """Рекурсивное форматирование объектов."""
+
     def _get_repr_with_getmembers() -> str:
         attrs = {
             k: pretty_repr(v, config, depth + 1)
@@ -18,7 +19,11 @@ def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: AN
 
     def _get_repr_with_dict() -> str:
         try:
-            attrs = {k: v for k, v in obj.__dict__.items() if not k.startswith('_')}
+            attrs = {
+                k: pretty_repr(v, config, depth + 1)
+                for k, v in obj.__dict__.items()
+                if not k.startswith('_')
+            }
         except Exception:  # noqa: BLE001
             return f'{obj.__class__.__name__} instance'
         else:

@@ -121,6 +121,9 @@ def test_signature_repr(skipped_args: tuple[str, ...], expected_repr: str) -> No
     args = (42,)
     kwargs = {'b': 'value'}
     signature = get_signature_repr(
-        sample_func, args, kwargs, config=LogConfig(skipped_args=skipped_args),
+        sample_func,
+        args,
+        kwargs,
+        config=LogConfig(skipped_args=skipped_args),
     )
     assert signature == expected_repr, 'Некорректное представление аргументов'

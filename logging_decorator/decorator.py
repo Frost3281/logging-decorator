@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import time
 from functools import wraps
@@ -31,7 +32,8 @@ class SyncOrAsyncFunc(Protocol):
     def __call__(self, func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
 
     def __call__(  # type: ignore
-        self, func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
+        self,
+        func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
     ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
         """Синхронная или асинхронная функция."""
 
@@ -97,14 +99,14 @@ def log(  # type: ignore # noqa: C901
             @wraps(func)
             async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
                 """Обертка для асинхронных функций."""
-                start_time = _log_start_work(*args, **kwargs)
+                start_time = await asyncio.to_thread(_log_start_work, *args, **kwargs)
                 try:
                     result = await func(*args, **kwargs)
                 except Exception as exc:
-                    _log_exception(exc)
+                    await asyncio.to_thread(_log_exception, exc)
                     raise
                 else:
-                    _log_finish_work(start_time)
+                    await asyncio.to_thread(_log_finish_work, start_time)
                     return result
 
             return async_wrapper

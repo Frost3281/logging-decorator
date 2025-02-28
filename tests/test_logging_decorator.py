@@ -134,7 +134,15 @@ def test_function_signature_repr() -> None:
 
     def inner_func(a: str) -> None: ...
 
-    def sample_func(a: int, func: Callable[[str], None], b: str = 'test') -> None: ...
+    async def sample_func(a: int, func: Callable[[str], None], b: str = 'ts') -> None: ...
 
-    signature = get_signature_repr(sample_func, (42,), {'b': 'value'}, config=LogConfig())
-    assert signature == "0: int = 42\n  b: str = 'value'"
+    signature = get_signature_repr(
+        sample_func,
+        (42, inner_func),
+        {'b': 'value'},
+        config=LogConfig(),
+    )
+    expected = (
+        "a: int = 42\n  func: function = inner_func(a: str) -> None\n  b: str = 'value'"
+    )
+    assert signature == expected

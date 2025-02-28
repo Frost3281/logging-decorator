@@ -6,11 +6,11 @@ from typing import (
     Callable,
     ParamSpec,
     Protocol,
-    TypeGuard,
     TypeVar,
-    Union,
     overload,
 )
+
+from typing_extensions import Concatenate, TypeGuard, Union
 
 from .config import LogConfig
 from .protocols import Logger
@@ -19,21 +19,45 @@ from .services import get_signature_repr
 P = ParamSpec('P')
 T = TypeVar('T')
 LoggerType = TypeVar('LoggerType', bound='Logger')
+Self = TypeVar('Self')
 
 
 class SyncOrAsyncFunc(Protocol):
-    """Типизированный протокол для декорирования функций."""
+    """Протокол для mypy."""
 
     @overload
-    def __call__(self, func: Callable[P, T]) -> Callable[P, T]: ...
+    def __call__(self, func: Callable[P, T]) -> Callable[P, T]: ...  # type: ignore
+
+    @overload
+    def __call__(
+        self,
+        func: Callable[Concatenate[Self, P], T],
+    ) -> Callable[Concatenate[Self, P], T]: ...
 
     @overload
     def __call__(self, func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
 
+    @overload
+    def __call__(
+        self,
+        func: Callable[Concatenate[Self, P], Awaitable[T]],
+    ) -> Callable[Concatenate[Self, P], Awaitable[T]]: ...
+
     def __call__(  # type: ignore
-        self, func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
-    ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
-        """Синхронная или асинхронная функция."""
+        self,
+        func: Union[
+            Callable[P, T],
+            Callable[Concatenate[Self, P], T],
+            Callable[P, Awaitable[T]],
+            Callable[Concatenate[Self, P], Awaitable[T]],
+        ],
+    ) -> Union[
+        Callable[P, T],
+        Callable[Concatenate[Self, P], T],
+        Callable[P, Awaitable[T]],
+        Callable[Concatenate[Self, P], Awaitable[T]],
+    ]:
+        """Вызов функции или метода."""
 
 
 def log(  # type: ignore # noqa: C901
@@ -44,14 +68,34 @@ def log(  # type: ignore # noqa: C901
     config = config or LogConfig()
 
     @overload
-    def decorator(func: Callable[P, T]) -> Callable[P, T]: ...
+    def decorator(func: Callable[P, T]) -> Callable[P, T]: ...  # type: ignore
+
+    @overload
+    def decorator(
+        func: Callable[Concatenate[Self, P], T],
+    ) -> Callable[Concatenate[Self, P], T]: ...
 
     @overload
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
 
+    @overload
+    def decorator(
+        func: Callable[Concatenate[Self, P], Awaitable[T]],
+    ) -> Callable[Concatenate[Self, P], Awaitable[T]]: ...
+
     def decorator(  # type: ignore # noqa: C901
-        func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
-    ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
+        func: Union[
+            Callable[P, T],
+            Callable[Concatenate[Self, P], T],
+            Callable[P, Awaitable[T]],
+            Callable[Concatenate[Self, P], Awaitable[T]],
+        ],
+    ) -> Union[
+        Callable[P, T],
+        Callable[Concatenate[Self, P], T],
+        Callable[P, Awaitable[T]],
+        Callable[Concatenate[Self, P], Awaitable[T]],
+    ]:
         def _log_start_work(*args: P.args, **kwargs: P.kwargs) -> float:
             start = time.perf_counter()
             signature_repr = get_signature_repr(func, args, kwargs, config)
@@ -109,12 +153,12 @@ def log(  # type: ignore # noqa: C901
 
             return async_wrapper
 
-        @wraps(func)
+        @wraps(func)  # type: ignore
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             """Обертка для синхронных функций."""
             start_time = _log_start_work(*args, **kwargs)
             try:
-                result = func(*args, **kwargs)
+                result = func(*args, **kwargs)  # type: ignore
             except Exception as exc:
                 _log_exception(exc)
                 raise
@@ -128,7 +172,7 @@ def log(  # type: ignore # noqa: C901
 
 
 def is_async(
-    func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
-) -> TypeGuard[Callable[P, Awaitable[T]]]:
+    func: Union[Callable[..., T], Callable[..., Awaitable[T]]],
+) -> TypeGuard[Callable[..., Awaitable[T]]]:
     """Проверяет, является ли функция асинхронной."""
     return inspect.iscoroutinefunction(func)

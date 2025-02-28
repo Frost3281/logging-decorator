@@ -14,6 +14,7 @@ from typing import (
 )
 
 from .config import LogConfig
+from .pretty_repr import pretty_repr
 from .protocols import Logger
 from .services import get_signature_repr
 
@@ -72,12 +73,14 @@ def log(  # type: ignore # noqa: C901
             return start
 
         def _log_exception(exc: Exception) -> None:
-            msg = f'Ошибка в функции "{func.__name__}": {repr(exc)}.'
+            exc_repr = pretty_repr(exc, config)
+            exc_str = pretty_repr(str(exc), config)
+            msg = f'Ошибка в функции "{func.__name__}":\n{exc_str}\n{exc_repr}.'
             logger.exception(  # noqa: LOG004
                 msg,
                 extra={
                     'func': func.__name__,
-                    'exception': exc,
+                    'exception': f'{exc_str}\n{exc_repr}',
                     'status': 'error',
                 },
             )

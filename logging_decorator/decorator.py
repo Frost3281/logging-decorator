@@ -73,14 +73,22 @@ def log(  # type: ignore # noqa: C901
             return start
 
         def _log_exception(exc: Exception) -> None:
-            exc_repr = pretty_repr(exc, config)
-            exc_str = pretty_repr(str(exc), config)
-            msg = f'Ошибка в функции "{func.__name__}":\n{exc_str}\n{exc_repr}.'
+            exc_repr = pretty_repr(
+                exc,
+                LogConfig(
+                    max_depth=max(2, config.max_depth),  # увеличиваем глубину
+                    max_arg_length=config.max_arg_length,
+                    include_args=config.include_args,
+                    show_types=config.show_types,
+                    skipped_args=config.skipped_args,
+                ),
+            )
+            msg = f'Ошибка в функции "{func.__name__}":\n{exc_repr}.'
             logger.exception(  # noqa: LOG004
                 msg,
                 extra={
                     'func': func.__name__,
-                    'exception': f'{exc_str}\n{exc_repr}',
+                    'exception': exc_repr,
                     'status': 'error',
                 },
             )

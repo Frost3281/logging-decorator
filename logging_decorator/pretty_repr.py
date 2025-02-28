@@ -1,4 +1,5 @@
 import inspect
+from contextlib import suppress
 from functools import singledispatch
 from typing import Any, Union
 
@@ -50,11 +51,9 @@ def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: AN
             return f'{obj.__class__.__name__}({attrs})'
 
     if inspect.isfunction(obj):
-        try:
+        with suppress(Exception):
             return _get_function_repr()
-        except Exception:  # noqa: BLE001
-            pass
-    if depth > 1:
+    if depth > config.max_depth:
         return '...'
     try:
         return _get_repr_with_getmembers()
@@ -67,14 +66,14 @@ def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: AN
 @pretty_repr.register(bool)
 @pretty_repr.register(type(None))
 def _(obj: Union[float, bool, None], config: LogConfig, depth: int = 0) -> str:  # noqa: FBT001, ARG001
-    if depth > 1:
+    if depth > config.max_depth:
         return '...'
     return repr(obj)
 
 
 @pretty_repr.register(str)
 def _(obj: str, config: LogConfig, depth: int = 0) -> str:
-    if depth > 1:
+    if depth > config.max_depth:
         return '...'
     if config.max_arg_length and len(obj) > config.max_arg_length:
         return f"'{obj[: config.max_arg_length - 3]}...'"

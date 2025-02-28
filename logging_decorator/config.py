@@ -10,3 +10,4 @@ class LogConfig:
     max_arg_length: Union[int, None] = 100
     show_types: bool = True
     skipped_args: Iterable[str] = field(default_factory=list)
+    max_depth: int = 1

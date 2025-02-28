@@ -127,3 +127,14 @@ def test_signature_repr(skipped_args: tuple[str, ...], expected_repr: str) -> No
         config=LogConfig(skipped_args=skipped_args),
     )
     assert signature == expected_repr, 'Некорректное представление аргументов'
+
+
+def test_function_signature_repr() -> None:
+    """Тест формирования представления сигнатуры функции."""
+
+    def inner_func(a: str) -> None: ...
+
+    def sample_func(a: int, func: Callable[[str], None], b: str = 'test') -> None: ...
+
+    signature = get_signature_repr(sample_func, (42,), {'b': 'value'}, config=LogConfig())
+    assert signature == "0: int = 42\n  b: str = 'value'"

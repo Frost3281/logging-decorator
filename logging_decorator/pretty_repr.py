@@ -6,8 +6,28 @@ from logging_decorator.config import LogConfig
 
 
 @singledispatch
-def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: ANN401
+def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: ANN401, C901
     """Рекурсивное форматирование объектов."""
+
+    def _get_function_repr() -> str:
+        sig = inspect.signature(obj)
+        params = []
+        return_annotation = _format_annotation(sig.return_annotation)
+        for param in sig.parameters.values():
+            param_str = param.name
+            param_str += f': {_format_annotation(param.annotation)}'
+            if param.default != inspect.Parameter.empty:
+                default_repr = pretty_repr(param.default, config, depth + 1)
+                param_str += f' = {default_repr}'
+            if param.kind == inspect.Parameter.VAR_POSITIONAL:
+                param_str = f'*{param_str}'
+            elif param.kind == inspect.Parameter.VAR_KEYWORD:
+                param_str = f'**{param_str}'
+            params.append(param_str)
+        name = getattr(obj, '__name__', None)
+        if name is None:
+            name = obj.__class__.__name__
+        return f'{name}({", ".join(params)}) -> {return_annotation}'
 
     def _get_repr_with_getmembers() -> str:
         attrs = {
@@ -29,6 +49,11 @@ def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: AN
         else:
             return f'{obj.__class__.__name__}({attrs})'
 
+    if inspect.isfunction(obj):
+        try:
+            return _get_function_repr()
+        except Exception:  # noqa: BLE001
+            pass
     if depth > 1:
         return '...'
     try:
@@ -74,3 +99,15 @@ def _(obj: dict, config: LogConfig, depth: int = 0) -> str:
     if config.max_arg_length and len(obj) > 5:
         items.append('...')
     return f'dict({", ".join(items)})'
+
+
+def _format_annotation(annotation: str) -> str:
+    """
+    Форматируем аннотацию.
+
+    >>> _format_annotation(<class 'str'>)
+    'str'
+    >>> _format_annotation(<class 'int'>)
+    'int'
+    """
+    return str(annotation).replace('<class ', '').replace("'", '').replace('>', '')

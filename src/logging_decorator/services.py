@@ -3,8 +3,8 @@ import logging
 from logging import Logger
 from typing import Any, Callable
 
-from logging_decorator.config import LogConfig
-from logging_decorator.pretty_repr import pretty_repr
+from src.logging_decorator.config import LogConfig
+from src.logging_decorator.pretty_repr import pretty_repr
 
 
 def get_default_logger() -> Logger:

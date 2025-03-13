@@ -9,40 +9,83 @@
 Применение:
 
 ```python
+import logging
+from dataclasses import dataclass
+
 from logging_decorator import log
 
-@log()
-def check_function(check_list: list[str]) -> None:
-    print(check_list)
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format='%(name)s - %(message)s')
 
-check_function(check_list=[1, 2, 3])
+
+@dataclass
+class Example:
+
+    a: int
+    b: str
+
+
+@log(logger)
+def check_function(check_list: list[Example], dict_example: dict[str, str], param_w_default: int = 1) -> None:
+    ...
+
+
+def main() -> None:
+    check_function([Example(1, '2'), Example(4, '5')], dict_example={'a': 'b'})
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 ```
-function 'check_function' called with args check_list=[1, 2, 3]
-function 'check_function' ended job with args check_list=[1, 2, 3], work_time = 0.003176100000000015
+root - Функция "check_function" начала работу с аргументами:
+  check_list: list = list(Example({'a': '...', 'b': '...'}), Example({'a': '...', 'b': '...'}))
+  dict_example: dict = dict(a: 'b')
+  param_w_default: int = 1.
+root - Функция "check_function" завершила работу за 0.0003 сек.
+```
+
+По умолчанию глубина прохождения по аргументам = 1. Можно изменить с помощью **LogConfig**:
+
+```python
+from logging_decorator import LogConfig
+
+@log(logger, LogConfig(max_depth=2))
+def check_function(check_list: list[Example], dict_example: dict[str, str], param_w_default: int = 1) -> None:
+    ...
+```
+
+```
+root - Функция "check_function" начала работу с аргументами:
+  check_list: list = list(Example({'a': '1', 'b': "'2'"}), Example({'a': '4', 'b': "'5'"}))
+  dict_example: dict = dict(a: 'b')
+  param_w_default: int = 1.
+root - Функция "check_function" завершила работу за 0.0003 сек.
 ```
 
 Аналогично работает с асинхронными функциями:
 
 ```python
 import asyncio
-from logging_decorator import log
 
-@log()
-async def check_function(check_list: list[str]) -> None:
-    print(check_list)
+@log(logger, LogConfig(max_depth=2))
+async def check_function(check_list: list[Example], dict_example: dict[str, str], param_w_default: int = 1) -> None:
+    ...
 
-asyncio.run(check_function(check_list=[1, 2, 3]))
+
+def main() -> None:
+    asyncio.run(check_function([Example(1, '2'), Example(4, '5')], dict_example={'a': 'b'}))
 ```
 
-В декоратор можно передавать также instance других logging-библиотек,
+Декоратору можно передавать также instance других logging-библиотек,
 кроме стандартной библиотеки **logging**, например, **loguru**,
 либо свои кастомные логгеры, соответствующие протоколу **Logger**.
 
 ```python
 import loguru
-from logging_decorator import log
+from src.logging_decorator import log
+
 
 @log(logger=loguru.logger)
 def check_function(check_list: list[str]) -> None:

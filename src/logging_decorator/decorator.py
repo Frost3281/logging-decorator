@@ -6,37 +6,21 @@ from typing import (
     Awaitable,
     Callable,
     ParamSpec,
-    Protocol,
     TypeGuard,
     TypeVar,
     Union,
     overload,
 )
 
+from src.protocols import Logger, SyncOrAsyncFunc
+
 from .config import LogConfig
 from .pretty_repr import pretty_repr
-from .protocols import Logger
 from .services import get_signature_repr
 
 P = ParamSpec('P')
 T = TypeVar('T')
 LoggerType = TypeVar('LoggerType', bound='Logger')
-
-
-class SyncOrAsyncFunc(Protocol):
-    """Типизированный протокол для декорирования функций."""
-
-    @overload
-    def __call__(self, func: Callable[P, T]) -> Callable[P, T]: ...
-
-    @overload
-    def __call__(self, func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]: ...
-
-    def __call__(  # type: ignore
-        self,
-        func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
-    ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
-        """Синхронная или асинхронная функция."""
 
 
 def log(  # type: ignore # noqa: C901

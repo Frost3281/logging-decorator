@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, TypeVar, get_type_hi
 import pytest
 from typing_extensions import ParamSpec
 
-from src.logging_decorator import log
-from src.logging_decorator.config import LogConfig
-from src.logging_decorator.services import get_signature_repr
+from logging_decorator.logging_decorator import log
+from logging_decorator.logging_decorator.config import LogConfig
+from logging_decorator.logging_decorator.services import get_signature_repr
 
 if TYPE_CHECKING:
     from tests.conftest import MockLogger

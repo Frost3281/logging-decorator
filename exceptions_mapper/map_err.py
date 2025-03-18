@@ -1,11 +1,11 @@
 import asyncio
 from typing import Any, Awaitable, Callable, ParamSpec, Type, Union, overload
 
-from src.exceptions_mapper.exceptions import DetailedError
-from src.logging_decorator import LogConfig
-from src.logging_decorator.decorator import T, is_async
-from src.logging_decorator.services import get_signature_repr
-from src.protocols import SyncOrAsyncFunc
+from exceptions_mapper.exceptions import DetailedError
+from logging_decorator.logging_decorator import LogConfig
+from logging_decorator.logging_decorator.decorator import T, is_async
+from logging_decorator.logging_decorator.services import get_signature_repr
+from logging_decorator.protocols import SyncOrAsyncFunc
 
 P = ParamSpec('P')
 

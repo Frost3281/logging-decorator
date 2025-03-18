@@ -3,7 +3,7 @@ from contextlib import suppress
 from functools import singledispatch
 from typing import Any, Union
 
-from src.logging_decorator.config import LogConfig
+from logging_decorator.logging_decorator.config import LogConfig
 
 
 @singledispatch

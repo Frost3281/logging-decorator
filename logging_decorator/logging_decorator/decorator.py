@@ -12,7 +12,7 @@ from typing import (
     overload,
 )
 
-from src.protocols import Logger, SyncOrAsyncFunc
+from logging_decorator.protocols import Logger, SyncOrAsyncFunc
 
 from .config import LogConfig
 from .pretty_repr import pretty_repr

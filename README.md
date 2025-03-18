@@ -84,7 +84,7 @@ def main() -> None:
 
 ```python
 import loguru
-from src.logging_decorator import log
+from logging_decorator.logging_decorator import log
 
 
 @log(logger=loguru.logger)

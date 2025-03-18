@@ -2,8 +2,8 @@ from typing import Any, Awaitable, Callable, Union
 
 import pytest
 
-from src import DetailedError, map_error
-from src.logging_decorator.decorator import is_async
+from exceptions_mapper import DetailedError, map_error
+from logging_decorator.logging_decorator.decorator import is_async
 
 
 class _ZeroDivisionMappedError(DetailedError):

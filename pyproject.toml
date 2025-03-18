@@ -5,10 +5,10 @@ description = ""
 authors = ["Vitaliy.Mikhalchenko <vitalik.arshavin@yandex.ru>"]
 readme = "README.md"
 packages = [
-    {include = "src/logging_decorator"},
-    {include = "src/logging_decorator/py.typed"},
-    {include = "src/exceptions_mapper"},
-    {include = "src/exceptions_mapper/py.typed"},
+    {include = "logging_decorator"},
+    {include = "logging_decorator/py.typed"},
+    {include = "exceptions_mapper"},
+    {include = "exceptions_mapper/py.typed"},
 ]
 
 [tool.poetry.dependencies]

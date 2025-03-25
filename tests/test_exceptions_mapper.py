@@ -1,3 +1,4 @@
+import re
 from typing import Any, Awaitable, Callable, Union
 
 import pytest
@@ -10,7 +11,10 @@ class _ZeroDivisionMappedError(DetailedError):
     """Ошибка деления на ноль."""
 
 
-@map_error({Exception: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError})
+@map_error(
+    {Exception: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError},
+    local_params_to_add={'msg'},
+)
 def _func_test(a: int) -> None:
     """Тестовая функция."""
     if a:
@@ -19,7 +23,10 @@ def _func_test(a: int) -> None:
     raise ZeroDivisionError
 
 
-@map_error({Exception: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError})
+@map_error(
+    {Exception: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError},
+    local_params_to_add={'msg'},
+)
 async def _func_test_async(a: int) -> None:
     """Тестовая асинхронная функция."""
     if a:
@@ -42,7 +49,9 @@ async def _func_test_async_not_decorated(a: int) -> None:
 @pytest.mark.asyncio
 async def test_map_error_with_parameter(f: Callable[..., Union[Any, Awaitable[Any]]]):
     """Тестирование функции map_error."""
-    await _check_is_raise(f, DetailedError, 'a: int = 1')
+    await _check_is_raise(f, DetailedError, 'a: int = 1', 'Тестовая ошибка 1')
+    with pytest.raises(AssertionError, match='Regex pattern did not match.'):
+        await _check_is_raise(f, DetailedError, 'a: int = 1', 'Тестовая ошибка 2')
 
 
 @pytest.mark.parametrize('f', [_func_test, _func_test_async])
@@ -67,8 +76,14 @@ async def test_map_error_with_parameter_not_decorated(
 async def _check_is_raise(
     f: Callable[..., Union[Any, Awaitable[Any]]],
     error: type[DetailedError],
-    match: str,
+    *matches: str,
     arg: int = 1,
 ) -> None:
-    with pytest.raises(error, match=match):
+    # Combine all matches into a regex pattern with positive lookaheads
+    regex_pattern = ''
+    for match in matches:
+        escaped = re.escape(match)
+        regex_pattern += f'(?=.*{escaped})'
+    regex_pattern += '.*'
+    with pytest.raises(error, match=regex_pattern):
         await f(arg) if is_async(f) else f(arg)  # type: ignore

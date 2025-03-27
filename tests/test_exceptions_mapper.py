@@ -1,5 +1,5 @@
 import re
-from typing import Any, Awaitable, Callable, Union
+from typing import Any, Awaitable, Callable, NoReturn, Union
 
 import pytest
 
@@ -73,13 +73,25 @@ async def test_map_error_with_parameter_not_decorated(
     await _check_is_raise(f, DetailedError, 'a: int = 1')
 
 
+def test_function_with_raise_detailed_error():
+    """Тестирование DetailedError."""
+
+    def raise_function(_: int = 2) -> NoReturn:
+        a = 1
+        raise DetailedError(message=f'test {a}')
+
+    with pytest.raises(DetailedError) as exc_info:
+        raise_function()
+    assert exc_info.value.context['args'] == {'_': 2}
+    assert exc_info.value.context['locals'] == {'a': 1}
+
+
 async def _check_is_raise(
     f: Callable[..., Union[Any, Awaitable[Any]]],
     error: type[DetailedError],
     *matches: str,
     arg: int = 1,
 ) -> None:
-    # Combine all matches into a regex pattern with positive lookaheads
     regex_pattern = ''
     for match in matches:
         escaped = re.escape(match)

@@ -11,7 +11,7 @@ class DetailedError(Exception):
 
     message: str = ''
     details: dict[str, Any] | str = field(default_factory=dict)
-    code: str = 'UNKNOWN_ERROR'
+    code: str = 'DETAILED_ERROR'
     timestamp: datetime = datetime.now(timezone.utc)
     context: dict[str, Any] = field(default_factory=dict)
     auto_capture: bool = True
@@ -47,7 +47,7 @@ class DetailedError(Exception):
                 'code': self.code,
                 'details': self.details,
                 'context': self.context,
-                'timestamp': self.timestamp.isoformat(),
+                'timestamp': f'{self.timestamp:%Y-%m-%dT%H:%M:%S}',
             },
         }
 

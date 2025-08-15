@@ -53,8 +53,13 @@ def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: AN
     if inspect.isfunction(obj):
         with suppress(Exception):
             return _get_function_repr()
-    if depth > config.max_depth:
-        return '...'
+    else:
+        if depth > config.max_depth:
+            return '...'
+        if not config.show_complex_args:
+            if isinstance(obj, Exception):
+                return repr(obj)
+            return f'<{obj.__class__.__name__}>'
     try:
         return _get_repr_with_getmembers()
     except Exception:  # noqa: BLE001

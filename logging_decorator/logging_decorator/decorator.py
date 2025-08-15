@@ -60,6 +60,7 @@ def log(  # type: ignore # noqa: C901
                     include_args=config.include_args,
                     show_types=config.show_types,
                     skipped_args=config.skipped_args,
+                    show_complex_args=config.show_complex_args,
                 ),
             )
             msg = f'Ошибка в функции "{func.__name__}":\n{exc_repr}.'

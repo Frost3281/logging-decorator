@@ -13,9 +13,8 @@ from typing import (
 )
 
 from exceptions_mapper import DetailedError
-from logging_decorator.logging_decorator import LogConfig
-from logging_decorator.logging_decorator.decorator import T, is_async
-from logging_decorator.logging_decorator.services import get_signature_repr
+from logging_decorator.logging_decorator.config import LogConfig
+from logging_decorator.logging_decorator.services import T, get_signature_repr, is_async
 from logging_decorator.protocols import SyncOrAsyncFunc
 
 P = ParamSpec('P')
@@ -25,11 +24,13 @@ request_context: ContextVar[dict[str, Any]] = ContextVar('request_context', defa
 def map_error(  # noqa: C901
     errors: Optional[dict[type[Exception], type[DetailedError]]] = None,
     *,
-    local_params_to_add: set[str] | None = None,
+    exclude_args: set[str] | None = None,
+    config: LogConfig | None = None,
 ) -> SyncOrAsyncFunc:
     """Декоратор для логирования работы функций."""
+    config = config or LogConfig()
     errors = errors or {Exception: DetailedError}
-    local_params = local_params_to_add or set()
+    exclude_args = exclude_args or set()
 
     @overload
     def decorator(func: Callable[P, T]) -> Callable[P, T]: ...
@@ -40,10 +41,10 @@ def map_error(  # noqa: C901
     def decorator(  # type: ignore
         func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
     ) -> Union[Callable[P, T], Callable[P, Awaitable[T]]]:
-        def _get_local_vars(frame: FrameType, names: set[str]) -> dict[str, Any]:
+        def _get_local_vars(frame: FrameType, exclude: set[str]) -> dict[str, Any]:
             """Получает указанные локальные переменные из фрейма."""
             return {
-                name: frame.f_locals.get(name) for name in names if name in frame.f_locals
+                name: val for name, val in frame.f_locals.items() if name not in exclude
             }
 
         def _raise_error(
@@ -51,13 +52,13 @@ def map_error(  # noqa: C901
             args: tuple[Any, ...],
             kwargs: dict[str, Any],
         ) -> NoReturn:
-            details = get_signature_repr(func, args, kwargs, LogConfig())
+            details = get_signature_repr(func, args, kwargs, config)
             error_cls = errors.get(type(e), DetailedError)
 
             context = request_context.get().copy()
             _, _, exc_tb = sys.exc_info()
             frame = _get_error_frame(exc_tb, func.__code__) if exc_tb else None
-            context.update({'locals': _get_local_vars(frame, local_params)})  # type: ignore
+            context.update({'locals': _get_local_vars(frame, exclude_args)})  # type: ignore
             error = error_cls(
                 message=str(e),
                 details=details,

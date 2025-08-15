@@ -1,7 +1,7 @@
 import inspect
 import logging
 from logging import Logger
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable, ParamSpec, TypeGuard, TypeVar, Union
 
 from logging_decorator.logging_decorator.config import LogConfig
 from logging_decorator.logging_decorator.pretty_repr import pretty_repr
@@ -37,3 +37,14 @@ def get_signature_repr(
         value_repr = pretty_repr(value, config)
         arg_lines.append(f'{name}{type_info} = {value_repr}')
     return '\n  '.join(arg_lines) if arg_lines else ''
+
+
+P = ParamSpec('P')
+T = TypeVar('T')
+
+
+def is_async(
+    func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
+) -> TypeGuard[Callable[P, Awaitable[T]]]:
+    """Проверяет, является ли функция асинхронной."""
+    return inspect.iscoroutinefunction(func)

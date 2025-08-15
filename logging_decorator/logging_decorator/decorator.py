@@ -1,12 +1,9 @@
 import asyncio
-import inspect
 import time
 from functools import wraps
 from typing import (
     Awaitable,
     Callable,
-    ParamSpec,
-    TypeGuard,
     TypeVar,
     Union,
     overload,
@@ -16,10 +13,8 @@ from logging_decorator.protocols import Logger, SyncOrAsyncFunc
 
 from .config import LogConfig
 from .pretty_repr import pretty_repr
-from .services import get_signature_repr
+from .services import P, T, get_signature_repr, is_async
 
-P = ParamSpec('P')
-T = TypeVar('T')
 LoggerType = TypeVar('LoggerType', bound='Logger')
 
 
@@ -122,10 +117,3 @@ def log(  # type: ignore # noqa: C901
         return sync_wrapper
 
     return decorator  # type: ignore
-
-
-def is_async(
-    func: Union[Callable[P, T], Callable[P, Awaitable[T]]],
-) -> TypeGuard[Callable[P, Awaitable[T]]]:
-    """Проверяет, является ли функция асинхронной."""
-    return inspect.iscoroutinefunction(func)

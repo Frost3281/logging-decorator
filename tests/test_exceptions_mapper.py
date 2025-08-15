@@ -4,7 +4,7 @@ from typing import Any, Awaitable, Callable, NoReturn, Union
 import pytest
 
 from exceptions_mapper import DetailedError, map_error
-from logging_decorator.logging_decorator.decorator import is_async
+from logging_decorator.logging_decorator.services import is_async
 
 
 class _ZeroDivisionMappedError(DetailedError):
@@ -13,7 +13,6 @@ class _ZeroDivisionMappedError(DetailedError):
 
 @map_error(
     {Exception: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError},
-    local_params_to_add={'msg'},
 )
 def _func_test(a: int) -> None:
     """Тестовая функция."""
@@ -24,8 +23,7 @@ def _func_test(a: int) -> None:
 
 
 @map_error(
-    {Exception: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError},
-    local_params_to_add={'msg'},
+    {ValueError: DetailedError, ZeroDivisionError: _ZeroDivisionMappedError},
 )
 async def _func_test_async(a: int) -> None:
     """Тестовая асинхронная функция."""
@@ -78,7 +76,8 @@ def test_function_with_raise_detailed_error():
 
     def raise_function(_: int = 2) -> NoReturn:
         a = 1
-        raise DetailedError(message=f'test {a}')
+        secure = 'secure_value'
+        raise DetailedError(message=f'test {a} {secure}', secure_variables={'secure'})
 
     with pytest.raises(DetailedError) as exc_info:
         raise_function()

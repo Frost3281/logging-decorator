@@ -54,14 +54,7 @@ def log(  # type: ignore # noqa: C901
         def _log_exception(exc: Exception) -> None:
             exc_repr = pretty_repr(
                 exc,
-                LogConfig(
-                    max_depth=max(2, config.max_depth),  # увеличиваем глубину
-                    max_arg_length=config.max_arg_length,
-                    include_args=config.include_args,
-                    show_types=config.show_types,
-                    skipped_args=config.skipped_args,
-                    show_complex_args=config.show_complex_args,
-                ),
+                LogConfig.from_config(config, max_depth=max(2, config.max_depth)),
             )
             msg = f'Ошибка в функции "{func.__name__}":\n{exc_repr}.'
             logger.exception(  # noqa: LOG004

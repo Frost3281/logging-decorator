@@ -90,9 +90,9 @@ def test_function_logging(case: TestCase, logger: MockLogger) -> None:
 
 
 _VALUE_ERROR_MSG = (
-    'ValueError({\'add_note\': \'builtin_function_or_method({})\', \'args\': '
+    "ValueError({'add_note': 'builtin_function_or_method({})', 'args': "
     '"tuple(\'Тестовая ошибка\')", '
-    '\'with_traceback\': \'builtin_function_or_method({})\'}).'
+    "'with_traceback': 'builtin_function_or_method({})'})."
 )
 
 
@@ -104,7 +104,10 @@ _VALUE_ERROR_MSG = (
     ],
 )
 def test_exception_logging(
-    *, show_complex_args: bool, expected_repr: str, logger: MockLogger,
+    *,
+    show_complex_args: bool,
+    expected_repr: str,
+    logger: MockLogger,
 ) -> None:
     """Тест логирования исключений."""
 

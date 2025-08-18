@@ -12,3 +12,10 @@ class LogConfig:
     skipped_args: Iterable[str] = field(default_factory=list)
     max_depth: int = 1
     show_complex_args: bool = False
+
+    @classmethod
+    def from_config(
+        cls, config: 'LogConfig', **kwargs: bool | int | None | str,
+    ) -> 'LogConfig':
+        """Создание конфигурации логирования."""
+        return cls(**{**config.__dict__, **kwargs})

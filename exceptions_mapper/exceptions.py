@@ -8,13 +8,7 @@ from logging_decorator import LogConfig
 from logging_decorator.logging_decorator.pretty_repr import pretty_repr
 
 
-def _get_log_config() -> LogConfig:
-    return LogConfig(
-        skipped_args={'self', 'auto_capture', 'config'},
-    )
-
-
-@dataclass
+@dataclass(kw_only=True)
 class DetailedError(Exception):
     """Исключение с дополнительными данными."""
 
@@ -23,7 +17,7 @@ class DetailedError(Exception):
     code: str = 'DETAILED_ERROR'
     timestamp: datetime = datetime.now(timezone.utc) + timedelta(hours=3)
     context: dict[str, Any] = field(default_factory=dict)
-    config: LogConfig = field(default_factory=_get_log_config)
+    config: LogConfig = field(default_factory=LogConfig)
 
     def __post_init__(self) -> None:
         """Пост-инициализация."""
@@ -37,15 +31,8 @@ class DetailedError(Exception):
             return
         args = _get_args(frame, self.config)
         exclude = {*self.config.skipped_args, *args.keys()}
-        self.context.update(
-            {
-                'locals': _get_locals(
-                    frame,
-                    config=LogConfig.from_config(self.config, skipped_args=exclude),
-                ),
-                'args': args,
-            },
-        )
+        config = LogConfig.from_config(self.config, skipped_args=exclude)
+        self.context.update({'locals': _get_locals(frame, config), 'args': args})
 
     def with_context(self, **context: Any) -> 'DetailedError':  # noqa: ANN401
         """Добавляет контекст к исключению."""
@@ -56,6 +43,7 @@ class DetailedError(Exception):
         """Сериализация ошибки."""
         return {
             'error': {
+                'type': self.__class__.__name__,
                 'message': self.message,
                 'code': self.code,
                 'details': self.details,
@@ -70,7 +58,7 @@ class DetailedError(Exception):
 
     def __repr__(self) -> str:
         """Строковое представление ошибки."""
-        return str(self)
+        return str(self.to_dict())
 
 
 def _get_args(

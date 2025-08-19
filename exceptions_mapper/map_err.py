@@ -24,13 +24,12 @@ request_context: ContextVar[dict[str, Any]] = ContextVar('request_context', defa
 def map_error(  # noqa: C901
     errors: Optional[dict[type[Exception], type[DetailedError]]] = None,
     *,
-    exclude_args: set[str] | None = None,
     config: LogConfig | None = None,
 ) -> SyncOrAsyncFunc:
     """Декоратор для логирования работы функций."""
     config = config or LogConfig()
     errors = errors or {Exception: DetailedError}
-    exclude_args = exclude_args or set()
+    exclude_args = config.skipped_args or set()
 
     @overload
     def decorator(func: Callable[P, T]) -> Callable[P, T]: ...

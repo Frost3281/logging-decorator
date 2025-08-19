@@ -89,29 +89,16 @@ def test_function_logging(case: TestCase, logger: MockLogger) -> None:
     assert 'завершила работу' in end_msg['msg'], 'Отсутствует сообщение о завершении'
 
 
-_VALUE_ERROR_MSG = (
-    "ValueError({'add_note': 'builtin_function_or_method({})', 'args': "
-    '"tuple(\'Тестовая ошибка\')", '
-    "'with_traceback': 'builtin_function_or_method({})'})."
-)
+_VALUE_ERROR_MSG = "ValueError('Тестовая ошибка')."
 
 
-@pytest.mark.parametrize(
-    ('show_complex_args', 'expected_repr'),
-    [
-        (False, "ValueError('Тестовая ошибка')."),
-        (True, _VALUE_ERROR_MSG),
-    ],
-)
 def test_exception_logging(
     *,
-    show_complex_args: bool,
-    expected_repr: str,
     logger: MockLogger,
 ) -> None:
     """Тест логирования исключений."""
 
-    @log(logger=logger, config=LogConfig(show_complex_args=show_complex_args))
+    @log(logger=logger, config=LogConfig(show_complex_args=False))
     def faulty_func() -> None:
         msg = 'Тестовая ошибка'
         raise ValueError(msg)
@@ -121,7 +108,7 @@ def test_exception_logging(
 
     error_msg = logger.messages[-1]
     assert error_msg['level'] == 'ERROR', 'Должно быть сообщение об ошибке'
-    assert error_msg['msg'] == f'Ошибка в функции "faulty_func":\n{expected_repr}'
+    assert error_msg['msg'] == f'Ошибка в функции "faulty_func":\n{_VALUE_ERROR_MSG}'
 
 
 @pytest.mark.parametrize(

@@ -12,7 +12,6 @@ from typing import (
 from logging_decorator.protocols import Logger, SyncOrAsyncFunc
 
 from .config import LogConfig
-from .pretty_repr import pretty_repr
 from .services import P, T, get_signature_repr, is_async
 
 LoggerType = TypeVar('LoggerType', bound='Logger')
@@ -52,10 +51,7 @@ def log(  # type: ignore # noqa: C901
             return start
 
         def _log_exception(exc: Exception) -> None:
-            exc_repr = pretty_repr(
-                exc,
-                LogConfig.from_config(config, max_depth=max(2, config.max_depth)),
-            )
+            exc_repr = repr(exc)
             msg = f'Ошибка в функции "{func.__name__}":\n{exc_repr}.'
             logger.exception(  # noqa: LOG004
                 msg,

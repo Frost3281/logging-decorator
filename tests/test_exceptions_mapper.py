@@ -4,6 +4,7 @@ from typing import Any, Awaitable, Callable, NoReturn, Union
 import pytest
 
 from exceptions_mapper import DetailedError, map_error
+from logging_decorator import LogConfig
 from logging_decorator.logging_decorator.services import is_async
 
 
@@ -77,12 +78,15 @@ def test_function_with_raise_detailed_error():
     def raise_function(_: int = 2) -> NoReturn:
         a = 1
         secure = 'secure_value'
-        raise DetailedError(message=f'test {a} {secure}', secure_variables={'secure'})
+        raise DetailedError(
+            message=f'test {a} {secure}',
+            config=LogConfig(skipped_args={'secure'}),
+        )
 
     with pytest.raises(DetailedError) as exc_info:
         raise_function()
     assert exc_info.value.context['args'] == {'_': '2'}
-    assert exc_info.value.context['locals'] == {'a': 1}
+    assert exc_info.value.context['locals'] == {'a': '1'}
 
 
 async def _check_is_raise(

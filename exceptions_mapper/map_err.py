@@ -53,13 +53,14 @@ def map_error(  # noqa: C901
             kwargs: dict[str, Any],
         ) -> NoReturn:
             details = get_signature_repr(func, args, kwargs, config)
-            error_cls = errors.get(type(e), DetailedError)
+            error_type = errors.get(type(e), DetailedError)
+            e_cls = type(e) if isinstance(e, DetailedError) else error_type
 
             context = request_context.get().copy()
             _, _, exc_tb = sys.exc_info()
             frame = _get_error_frame(exc_tb, func.__code__) if exc_tb else None
             context.update({'locals': _get_local_vars(frame, exclude_args)})  # type: ignore
-            error = error_cls(
+            error = e_cls(
                 message=str(e),
                 details=details,
             )

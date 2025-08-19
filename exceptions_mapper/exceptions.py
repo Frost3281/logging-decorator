@@ -43,14 +43,12 @@ class DetailedError(Exception):
     def to_dict(self) -> dict[str, Any]:
         """Сериализация ошибки."""
         return {
-            'error': {
-                'type': self.__class__.__name__,
-                'message': self.message,
-                'code': self.__class__.code,
-                'details': self._details,
-                'context': self.context,
-                'timestamp': f'{self.timestamp:%Y-%m-%dT%H:%M:%S}',
-            },
+            'type': self.__class__.__name__,
+            'message': self.message,
+            'code': self.__class__.code,
+            'details': self._details,
+            'context': self.context,
+            'timestamp': f'{self.timestamp:%Y-%m-%dT%H:%M:%S}',
         }
 
     @property

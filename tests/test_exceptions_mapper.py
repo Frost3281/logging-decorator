@@ -72,21 +72,27 @@ async def test_map_error_with_parameter_not_decorated(
     await _check_is_raise(f, DetailedError, 'a: int = 1')
 
 
+class DetailedWithSecureError(DetailedError):
+    """Ошибки с защищенными аргументами."""
+
+    config = LogConfig(skipped_args={'secure'})
+
+
 def test_function_with_raise_detailed_error():
     """Тестирование DetailedError."""
 
     def raise_function(_: int = 2) -> NoReturn:
         a = 1
         secure = 'secure_value'
-        raise DetailedError(
+        raise DetailedWithSecureError(
             message=f'test {a} {secure}',
-            config=LogConfig(skipped_args={'secure'}),
         )
 
-    with pytest.raises(DetailedError) as exc_info:
+    with pytest.raises(DetailedWithSecureError) as exc_info:
         raise_function()
-    assert exc_info.value.context['args'] == {'_': '2'}
-    assert exc_info.value.context['locals'] == {'a': '1'}
+    context = exc_info.value.to_dict()['context']
+    assert context['args'] == {'_': '2'}
+    assert context['locals'] == {'a': '1'}
 
 
 async def _check_is_raise(

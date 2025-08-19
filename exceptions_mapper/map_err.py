@@ -62,9 +62,9 @@ def map_error(  # noqa: C901
             error = error_cls(
                 message=str(e),
                 details=details,
-                context=context,
             )
             raise error.with_context(
+                **context,
                 exception_type=type(e).__name__,
                 function_name=func.__name__,
             ) from e

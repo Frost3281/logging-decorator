@@ -15,10 +15,12 @@ class DetailedError(Exception):
 
     message: str = ''
     details: dict[str, Any] | str = field(default_factory=dict)
-    code: ClassVar[str] = 'DETAILED_ERROR'
     timestamp: datetime = datetime.now(timezone.utc) + timedelta(hours=3)
-    context: dict[str, Any] = field(default_factory=dict)
-    config: LogConfig = field(default_factory=LogConfig)
+
+    code: ClassVar[str] = 'DETAILED_ERROR'
+    config: ClassVar[LogConfig] = field(default=LogConfig())
+
+    _context: dict[str, Any] = field(default_factory=dict, init=False)
 
     def __post_init__(self) -> None:
         """Пост-инициализация."""
@@ -33,11 +35,11 @@ class DetailedError(Exception):
         args = _get_args(frame, self.config)
         exclude = {*self.config.skipped_args, *args.keys()}
         config = LogConfig.from_config(self.config, skipped_args=exclude)
-        self.context.update({'locals': _get_locals(frame, config), 'args': args})
+        self._context.update({'locals': _get_locals(frame, config), 'args': args})
 
     def with_context(self, **context: Any) -> 'DetailedError':  # noqa: ANN401
         """Добавляет контекст к исключению."""
-        self.context.update(context)
+        self._context.update(context)
         return self
 
     def to_dict(self) -> dict[str, Any]:
@@ -47,7 +49,7 @@ class DetailedError(Exception):
             'message': self.message,
             'code': self.__class__.code,
             'details': self._details,
-            'context': self.context,
+            'context': self._context,
             'timestamp': f'{self.timestamp:%Y-%m-%dT%H:%M:%S}',
         }
 

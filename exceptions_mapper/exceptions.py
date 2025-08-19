@@ -1,4 +1,5 @@
 import inspect
+import pprint
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from types import FrameType
@@ -62,11 +63,11 @@ class DetailedError(Exception):
 
     def __str__(self) -> str:
         """Строковое представление ошибки."""
-        return str(self.to_dict())
+        return pprint.pformat(self.to_dict(), width=120)
 
     def __repr__(self) -> str:
         """Строковое представление ошибки."""
-        return str(self.to_dict())
+        return pprint.pformat(self.to_dict(), width=120)
 
 
 def _get_args(

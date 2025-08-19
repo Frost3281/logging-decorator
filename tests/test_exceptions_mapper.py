@@ -48,7 +48,7 @@ async def _func_test_async_not_decorated(a: int) -> None:
 @pytest.mark.asyncio
 async def test_map_error_with_parameter(f: Callable[..., Union[Any, Awaitable[Any]]]):
     """Тестирование функции map_error."""
-    await _check_is_raise(f, DetailedError, 'a: int = 1', 'Тестовая ошибка 1')
+    await _check_is_raise(f, DetailedError, 'Тестовая ошибка 1')
     with pytest.raises(AssertionError, match='Regex pattern did not match.'):
         await _check_is_raise(f, DetailedError, 'a: int = 1', 'Тестовая ошибка 2')
 

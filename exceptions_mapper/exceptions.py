@@ -46,11 +46,19 @@ class DetailedError(Exception):
                 'type': self.__class__.__name__,
                 'message': self.message,
                 'code': self.code,
-                'details': self.details,
+                'details': self._details,
                 'context': self.context,
                 'timestamp': f'{self.timestamp:%Y-%m-%dT%H:%M:%S}',
             },
         }
+
+    @property
+    def _details(self) -> dict[str, Any] | str:
+        return (
+            {k: pretty_repr(v, self.config) for k, v in self.details.items()}
+            if isinstance(self.details, dict)
+            else self.details
+        )
 
     def __str__(self) -> str:
         """Строковое представление ошибки."""

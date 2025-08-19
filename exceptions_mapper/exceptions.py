@@ -9,7 +9,7 @@ from logging_decorator import LogConfig
 from logging_decorator.logging_decorator.pretty_repr import pretty_repr
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, repr=False)
 class DetailedError(Exception):
     """Исключение с дополнительными данными."""
 

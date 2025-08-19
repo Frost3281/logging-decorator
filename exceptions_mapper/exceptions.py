@@ -68,6 +68,10 @@ class DetailedError(Exception):
         """Строковое представление ошибки."""
         return str(self.to_dict())
 
+    def __repr__(self) -> str:
+        """Строковое представление ошибки."""
+        return str(self)
+
 
 def _get_args(
     frame: FrameType,

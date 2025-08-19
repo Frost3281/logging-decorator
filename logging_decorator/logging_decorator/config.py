@@ -15,7 +15,9 @@ class LogConfig:
 
     @classmethod
     def from_config(
-        cls, config: 'LogConfig', **kwargs: bool | int | None | str,
+        cls,
+        config: 'LogConfig',
+        **kwargs: bool | int | None | str,
     ) -> 'LogConfig':
         """Создание конфигурации логирования."""
         return cls(**{**config.__dict__, **kwargs})

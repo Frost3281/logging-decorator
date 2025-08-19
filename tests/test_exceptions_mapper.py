@@ -81,7 +81,7 @@ def test_function_with_raise_detailed_error():
 
     with pytest.raises(DetailedError) as exc_info:
         raise_function()
-    assert exc_info.value.context['args'] == {'_': 2}
+    assert exc_info.value.context['args'] == {'_': '2'}
     assert exc_info.value.context['locals'] == {'a': 1}
 
 

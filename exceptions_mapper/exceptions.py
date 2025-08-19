@@ -4,6 +4,9 @@ from datetime import datetime, timedelta, timezone
 from types import FrameType
 from typing import Any, Iterable
 
+from logging_decorator import LogConfig
+from logging_decorator.logging_decorator.pretty_repr import pretty_repr
+
 
 @dataclass
 class DetailedError(Exception):
@@ -16,6 +19,7 @@ class DetailedError(Exception):
     context: dict[str, Any] = field(default_factory=dict)
     auto_capture: bool = True
     secure_variables: set[str] = field(default_factory=set)
+    config: LogConfig = field(default_factory=LogConfig)
 
     def __post_init__(self) -> None:
         """Пост-инициализация."""
@@ -27,7 +31,7 @@ class DetailedError(Exception):
         """Автоматически собирает контекст выполнения."""
         frame = _find_relevant_frame()
         if frame:
-            args = _get_args(frame, self.secure_variables)
+            args = _get_args(frame, self.secure_variables, self.config)
             exclude = {*self.secure_variables, *args.keys()}
             self.context.update(
                 {
@@ -58,10 +62,18 @@ class DetailedError(Exception):
         return str(self.to_dict())
 
 
-def _get_args(frame: FrameType, exclude_args: Iterable[str]) -> dict[str, Any]:
-    """Получает аргументы функции."""
+def _get_args(
+    frame: FrameType,
+    exclude_args: Iterable[str],
+    config: LogConfig,
+) -> dict[str, Any]:
+    """Получает аргументы функции с форматированием."""
     spec = inspect.getargvalues(frame)
-    return {arg: spec.locals[arg] for arg in spec.args if arg not in exclude_args}
+    return {
+        arg: pretty_repr(spec.locals[arg], config)
+        for arg in spec.args
+        if arg not in exclude_args
+    }
 
 
 def _get_locals(

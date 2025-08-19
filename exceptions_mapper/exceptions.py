@@ -3,7 +3,7 @@ import pprint
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from types import FrameType
-from typing import Any
+from typing import Any, ClassVar
 
 from logging_decorator import LogConfig
 from logging_decorator.logging_decorator.pretty_repr import pretty_repr
@@ -15,7 +15,7 @@ class DetailedError(Exception):
 
     message: str = ''
     details: dict[str, Any] | str = field(default_factory=dict)
-    code: str = 'DETAILED_ERROR'
+    code: ClassVar[str] = 'DETAILED_ERROR'
     timestamp: datetime = datetime.now(timezone.utc) + timedelta(hours=3)
     context: dict[str, Any] = field(default_factory=dict)
     config: LogConfig = field(default_factory=LogConfig)
@@ -46,7 +46,7 @@ class DetailedError(Exception):
             'error': {
                 'type': self.__class__.__name__,
                 'message': self.message,
-                'code': self.code,
+                'code': self.__class__.code,
                 'details': self._details,
                 'context': self.context,
                 'timestamp': f'{self.timestamp:%Y-%m-%dT%H:%M:%S}',
@@ -63,11 +63,11 @@ class DetailedError(Exception):
 
     def __str__(self) -> str:
         """Строковое представление ошибки."""
-        return pprint.pformat(self.to_dict(), width=120)
+        return _format(self.to_dict())
 
     def __repr__(self) -> str:
-        """Строковое представление ошибки."""
-        return pprint.pformat(self.to_dict(), width=120)
+        """Подробное представление ошибки."""
+        return _format(self.to_dict())
 
 
 def _get_args(
@@ -105,3 +105,8 @@ def _find_relevant_frame() -> FrameType:
         return frame.f_back  # type: ignore
     msg = 'Не удалось найти нужный стек ошибки.'
     raise ValueError(msg)
+
+
+def _format(data: object, width: int = 120) -> str:
+    """Форматирует данные."""
+    return pprint.pformat(data, width=width)

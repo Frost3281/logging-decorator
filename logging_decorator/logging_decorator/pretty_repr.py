@@ -1,5 +1,6 @@
 import inspect
 from contextlib import suppress
+from datetime import datetime
 from functools import singledispatch
 from typing import Any, Union
 
@@ -57,7 +58,7 @@ def pretty_repr(obj: Any, config: LogConfig, depth: int = 0) -> str:  # noqa: AN
         if depth > config.max_depth:
             return '...'
         if not config.show_complex_args:
-            if isinstance(obj, Exception):
+            if isinstance(obj, (Exception, datetime)):
                 return repr(obj)
             return f'<{obj.__class__.__name__}>'
     try:
